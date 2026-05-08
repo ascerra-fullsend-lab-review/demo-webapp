@@ -399,56 +399,6 @@ jobs:
             -f source_repo="$SOURCE_REPO" \
             -f event_payload="$EVENT_PAYLOAD"
 
-  dispatch-outcome-review:
-    runs-on: ubuntu-latest
-    outputs:
-      agent: ${{ steps.dispatch.outputs.agent }}
-    if: >-
-      (github.event_name == 'issue_comment'
-        && github.event.issue.pull_request
-        && (
-          github.event.comment.body == '/outcome-review'
-          || startsWith(github.event.comment.body, '/outcome-review ')
-          || startsWith(github.event.comment.body, format('{0}{1}', '/outcome-review', fromJSON('"\n"')))
-        ))
-      || (github.event_name == 'pull_request_target'
-        && github.event.action != 'closed')
-    steps:
-      - name: Build minimal payload
-        id: payload
-        env:
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-          ISSUE_HTML_URL: ${{ github.event.issue.html_url }}
-          PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
-          PR_HTML_URL: ${{ github.event.pull_request.html_url || github.event.issue.pull_request.html_url }}
-        run: |
-          set -euo pipefail
-          PAYLOAD=$(jq -cn \
-            --arg in "${ISSUE_NUMBER:-}" \
-            --arg iu "${ISSUE_HTML_URL:-}" \
-            --arg pn "${PR_NUMBER:-}" \
-            --arg pu "${PR_HTML_URL:-}" \
-            '{issue: {number: (if $in != "" then ($in | tonumber) else null end), html_url: (if $iu != "" then $iu else null end)},
-              pull_request: {number: (if $pn != "" then ($pn | tonumber) else null end), html_url: (if $pu != "" then $pu else null end)}}')
-          echo "json=$PAYLOAD" >> "$GITHUB_OUTPUT"
-      - name: Dispatch outcome-review stage
-        id: dispatch
-        env:
-          GH_TOKEN: ${{ secrets.FULLSEND_DISPATCH_TOKEN }}
-          EVENT_PAYLOAD: ${{ steps.payload.outputs.json }}
-          EVENT_TYPE: ${{ github.event_name }}
-          SOURCE_REPO: ${{ github.repository }}
-          DISPATCH_REPO: ${{ github.repository_owner }}/.fullsend
-        run: |
-          DISPATCH_URL=$(gh workflow run dispatch.yml \
-            --repo "$DISPATCH_REPO" \
-            -f stage=outcome-review \
-            -f event_type="$EVENT_TYPE" \
-            -f source_repo="$SOURCE_REPO" \
-            -f event_payload="$EVENT_PAYLOAD")
-          echo "::notice::Dispatched outcome-review → ${DISPATCH_URL}"
-          echo "agent=outcome-review" >> "$GITHUB_OUTPUT"
-
   dispatch-stop-fix:
     runs-on: ubuntu-latest
     if: >-
@@ -493,7 +443,6 @@ jobs:
         dispatch-triage,
         dispatch-code,
         dispatch-review,
-        dispatch-outcome-review,
         dispatch-fix-bot,
         dispatch-fix-human,
       ]
@@ -506,7 +455,6 @@ jobs:
             ${{ needs.dispatch-triage.outputs.agent
              || needs.dispatch-code.outputs.agent
              || needs.dispatch-review.outputs.agent
-             || needs.dispatch-outcome-review.outputs.agent
              || needs.dispatch-fix-bot.outputs.agent
              || needs.dispatch-fix-human.outputs.agent }}
           SHIM_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
