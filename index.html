@@ -6,24 +6,44 @@
   <title>Task Tracker</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; transition: background 0.3s, color 0.3s; }
     .container { max-width: 600px; margin: 40px auto; padding: 0 20px; }
-    h1 { font-size: 1.8rem; margin-bottom: 24px; color: #1a1a1a; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    h1 { font-size: 1.8rem; color: #1a1a1a; }
+    .theme-toggle { background: none; border: 1px solid #ddd; border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 1.2rem; line-height: 1; transition: border-color 0.3s; }
+    .theme-toggle:hover { border-color: #999; }
     .add-form { display: flex; gap: 8px; margin-bottom: 24px; }
-    .add-form input { flex: 1; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem; }
+    .add-form input { flex: 1; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem; background: #fff; color: #333; transition: background 0.3s, color 0.3s, border-color 0.3s; }
     .add-form button { padding: 10px 20px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-size: 0.95rem; cursor: pointer; }
     .add-form button:hover { background: #1d4ed8; }
     .task-list { list-style: none; }
-    .task-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #fff; border-radius: 8px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .task-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #fff; border-radius: 8px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: background 0.3s, box-shadow 0.3s; }
     .task-item.done .task-text { text-decoration: line-through; color: #999; }
     .task-text { flex: 1; font-size: 0.95rem; }
     .task-delete { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1.1rem; }
     .empty { text-align: center; color: #999; padding: 40px 0; }
+
+    /* Dark mode */
+    body.dark { background: #1a1a2e; color: #e0e0e0; }
+    body.dark h1 { color: #e0e0e0; }
+    body.dark .theme-toggle { border-color: #444; color: #e0e0e0; }
+    body.dark .theme-toggle:hover { border-color: #888; }
+    body.dark .add-form input { background: #16213e; color: #e0e0e0; border-color: #333; }
+    body.dark .add-form input::placeholder { color: #888; }
+    body.dark .add-form button { background: #3b82f6; }
+    body.dark .add-form button:hover { background: #2563eb; }
+    body.dark .task-item { background: #16213e; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+    body.dark .task-item.done .task-text { color: #666; }
+    body.dark .task-delete { color: #f87171; }
+    body.dark .empty { color: #666; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Task Tracker</h1>
+    <div class="header">
+      <h1>Task Tracker</h1>
+      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode">☀️</button>
+    </div>
     <div class="add-form">
       <input type="text" id="taskInput" placeholder="What needs to be done?">
       <button onclick="addTask()">Add</button>
@@ -61,6 +81,17 @@
     document.getElementById('taskInput').addEventListener('keydown', e => {
       if (e.key === 'Enter') addTask();
     });
+    function toggleTheme() {
+      const isDark = document.body.classList.toggle('dark');
+      document.getElementById('themeToggle').textContent = isDark ? '🌙' : '☀️';
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    }
+    (function initTheme() {
+      if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark');
+        document.getElementById('themeToggle').textContent = '🌙';
+      }
+    })();
   </script>
 </body>
 </html>
